@@ -67,8 +67,7 @@ def compute(var):
     print(f"{var} → Test MSE: {mse:.6f}")
 
     # ===== save the file =====
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    base   = f"{var}_lstm_{stamp}"
+    base   = f"{var}_lstm"
     model_path  = os.path.join(SAVE_DIR, f"{base}.keras")   # Keras v3 建議用 .keras
     scaler_path = os.path.join(SAVE_DIR, f"{base}.scaler")
     config_path = os.path.join(SAVE_DIR, f"{base}.json")
@@ -77,13 +76,13 @@ def compute(var):
     model.save(model_path)                 
     joblib.dump(scaler, scaler_path)       
     np.save(hist_path, hist.history)       
-    
+
     config = {
         "var": var,
         "n_steps": n_steps,
         "n_features": n_features,
         "train_len": int(len(train_norm)),
-        "test_len": int(len(test_norm))
+        "test_len": int(len(test_norm)),
     }
     with open(config_path, "w", encoding="utf-8") as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
@@ -95,7 +94,6 @@ def compute(var):
         "scaler_path": scaler_path,
         "config_path": config_path,
         "history_path": hist_path,
-        "mse": mse
     }
 
 if __name__ == "__main__":

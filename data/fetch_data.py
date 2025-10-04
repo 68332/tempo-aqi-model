@@ -164,7 +164,7 @@ def fetch_location(locationid, year_from=2020, year_to=2022, outdir="data"):
     out_map = load_out_as_map(out_csv)
 
     for year in range(year_from, year_to + 1):
-        for m in range(6, 13):
+        for m in range(1, 13):
             mm = f"{m:02d}"
             month_prefix = f"records/csv.gz/locationid={locationid}/year={year}/month={mm}/"
 
@@ -184,4 +184,4 @@ def fetch_location(locationid, year_from=2020, year_to=2022, outdir="data"):
     print(f"[DONE ] wrote wide table -> {out_csv}")
 
 if __name__ == "__main__":
-    fetch_location(locationid=221, year_from=2025, year_to=2025)
+    fetch_location(locationid=221, year_from=2022, year_to=2025)
