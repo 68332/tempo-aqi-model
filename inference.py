@@ -1,7 +1,10 @@
 import json
+import os
+import requests
 import joblib
 import numpy as np
 from tensorflow.keras.models import load_model
+from openaq import OpenAQ
 
 # AQI brakpoints definition
 aqi_breakpoints = {
@@ -75,26 +78,35 @@ def predict_next(var, recent_series, model_path, scaler_path, config_path):
     return float(yhat)
 
 def predict_sequence(name):
+    # Get Input Vector
+    gas = fetchgas()
+    
+    pm25_intput = gas["pm25"]
     pm25_model   = "models/pm25_lstm.keras"
     pm25_scaler  = "models/pm25_lstm.scaler"
     pm25_config  = "models/pm25_lstm.json"
 
+    pm10_intput = gas["pm10"]
     pm10_model   = "models/pm10_lstm.keras"
     pm10_scaler  = "models/pm10_lstm.scaler"
     pm10_config  = "models/pm10_lstm.json"
 
+    o3_intput = gas["o3"]
     o3_model    = "models/o3_lstm.keras"
     o3_scaler   = "models/o3_lstm.scaler"
     o3_config   = "models/o3_lstm.json"
 
+    co_intput = gas["co"]
     co_model    = "models/co_lstm.keras"
     co_scaler   = "models/co_lstm.scaler"
     co_config   = "models/co_lstm.json"
 
+    so2_intput = gas["so2"]
     so2_model   = "models/so2_lstm.keras"
     so2_scaler  = "models/so2_lstm.scaler"
     so2_config  = "models/so2_lstm.json"
 
+    no2_intput = gas["no2"]
     no2_model   = "models/no2_lstm.keras"
     no2_scaler  = "models/no2_lstm.scaler"
     no2_config  = "models/no2_lstm.json"
@@ -147,7 +159,7 @@ def predict_sequence(name):
         config_path=no2_config
     )   
 
-    sample = {"pm25": pm25_pred, "pm10": pm10_pred, "co": co_pred, "so2": so2_pred, "no2": no2_pred} 
+    sample = {"pm25": pm25_pred, "pm10": pm10_pred, "co": co_pred, "so2": so2_pred, "no2": no2_pred, "o3": o3_pred} 
     result = calculate_overall_aqi(sample)
     return result    
 
@@ -183,7 +195,38 @@ def calculate_overall_aqi(values):
         "Detail": individual_aqis
     }
 
+def fetchgas():
+    vars_to_fetch = ["pm25", "pm10", "o3", "no2", "so2", "co"]
+    results = {}
+    for v in vars_to_fetch:
+        results[v] = fetchsiglegas(v)   # 假設 fetchsiglegas 需要帶入 v
+    return results
+
+def fetchsiglegas(sensor_id):
+    api_key = "41e704bb85ef8f83cf8a5723210056ed6bd5cdbc4c4bcb2e46df5f746fa3475f"
+    url = f"https://api.openaq.org/v3/sensors/{sensor_id}/hours"
+    print(url)
+    headers = {}
+    headers["X-API-Key"] = api_key
+    resp = requests.get(url, headers=headers, timeout=30)
+
+    # Error handling
+    if resp.status_code != 200:
+        print("Error:", resp.status_code, resp.text)
+        return None
+    
+    # Get the last three hours' values
+    data = resp.json()
+    detail = data.get("results")
+    last_three = detail[-3:]
+    values = [item["value"] for item in last_three]
+    return values
+
+def fetch_vars_to_fetch(station_id):
+    api_key = "41e704bb85ef8f83cf8a5723210056ed6bd5cdbc4c4bcb2e46df5f746fa3475f"
+    url = f"https://api.openaq.org/v3/sensors/{sensor_id}/hours"
 
 
 if __name__ == "__main__":
-    print("AQI is", predict_sequence('test'))
+    print(fetchsiglegas(273))
+    # print("AQI is", predict_sequence('test'))
