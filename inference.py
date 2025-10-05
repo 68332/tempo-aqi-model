@@ -52,6 +52,13 @@ aqi_breakpoints = {
         {"lo": 650,  "hi": 1249, "aqiLo": 201, "aqiHi": 300},
         {"lo": 1250, "hi": 1649, "aqiLo": 301, "aqiHi": 400},
         {"lo": 1650, "hi": 2049, "aqiLo": 401, "aqiHi": 500},
+    ],
+    "o3": [
+        { "lo": 0, "hi": 0.054, "aqiLo": 0, "aqiHi": 50 },
+        { "lo": 0.055, "hi": 0.070, "aqiLo": 51, "aqiHi": 100 },
+        { "lo": 0.071, "hi": 0.085, "aqiLo": 101, "aqiHi": 150 },
+        { "lo": 0.086, "hi": 0.105, "aqiLo": 151, "aqiHi": 200 },
+        { "lo": 0.106, "hi": 0.200, "aqiLo": 201, "aqiHi": 300 }
     ]
 }
 
@@ -77,9 +84,10 @@ def predict_next(var, recent_series, model_path, scaler_path, config_path):
     print(f"{var} inference end")
     return float(yhat)
 
-def predict_sequence(name):
+def predict_sequence(station_id):
     # Get Input Vector
-    gas = fetchgas()
+    gas = fetchgas(station_id)
+    print("Fetched gas data:", gas)
     
     pm25_intput = gas["pm25"]
     pm25_model   = "models/pm25_lstm.keras"
@@ -113,7 +121,7 @@ def predict_sequence(name):
 
     pm25_pred = predict_next(
         "pm25",
-        recent_series=[10.3, 10.0, 12.3],
+        recent_series=pm25_intput,
         model_path=pm25_model,
         scaler_path=pm25_scaler,
         config_path=pm25_config,
@@ -121,7 +129,7 @@ def predict_sequence(name):
 
     pm10_pred = predict_next(
         "pm10",
-        recent_series=[25, 15, 15],
+        recent_series=pm10_intput,
         model_path=pm10_model,
         scaler_path=pm10_scaler,
         config_path=pm10_config,
@@ -129,7 +137,7 @@ def predict_sequence(name):
 
     o3_pred = predict_next(
         "o3",
-        recent_series=[0.020, 0.025, 0.018],
+        recent_series=o3_intput,
         model_path=o3_model,
         scaler_path=o3_scaler,
         config_path=o3_config,
@@ -137,7 +145,7 @@ def predict_sequence(name):
 
     so2_pred = predict_next(
         "so2",
-        recent_series=[0.020, 0.025, 0.018],
+        recent_series=so2_intput,
         model_path=so2_model,
         scaler_path=so2_scaler,
         config_path=so2_config,
@@ -145,7 +153,7 @@ def predict_sequence(name):
 
     co_pred = predict_next(
         "co",
-        recent_series=[0.2, 0.3, 0.25],
+        recent_series=co_intput,
         model_path=co_model,
         scaler_path=co_scaler,
         config_path=co_config
@@ -153,7 +161,7 @@ def predict_sequence(name):
 
     no2_pred = predict_next(
         "no2",
-        recent_series=[0.2, 0.3, 0.25],
+        recent_series=no2_intput,
         model_path=no2_model,
         scaler_path=no2_scaler,
         config_path=no2_config
@@ -195,11 +203,14 @@ def calculate_overall_aqi(values):
         "Detail": individual_aqis
     }
 
-def fetchgas():
-    vars_to_fetch = ["pm25", "pm10", "o3", "no2", "so2", "co"]
+def fetchgas(station_id):
+    vars_to_fetch = fetchsensors(station_id)
+    print("vars_to_fetch:", vars_to_fetch)
+
     results = {}
-    for v in vars_to_fetch:
-        results[v] = fetchsiglegas(v)   # 假設 fetchsiglegas 需要帶入 v
+    for item in vars_to_fetch:
+        for key, value in item.items():
+            results[key] = fetchsiglegas(value)   # 帶入 sensor id 呼叫
     return results
 
 def fetchsiglegas(sensor_id):
@@ -222,11 +233,29 @@ def fetchsiglegas(sensor_id):
     values = [item["value"] for item in last_three]
     return values
 
-def fetch_vars_to_fetch(station_id):
+# Fetch sensors for a given station ID
+def fetchsensors(station_id):
     api_key = "41e704bb85ef8f83cf8a5723210056ed6bd5cdbc4c4bcb2e46df5f746fa3475f"
-    url = f"https://api.openaq.org/v3/sensors/{sensor_id}/hours"
+    url = f"https://api.openaq.org/v3/locations/{station_id}/sensors"
+    headers = {}
+    headers["X-API-Key"] = api_key
+    resp = requests.get(url, headers=headers, timeout=30)
+    # Error handling
+    if resp.status_code != 200:
+        print("Error:", resp.status_code, resp.text)
+        return None
 
+    data = resp.json()
+    # Check if results is empty
+    result = data.get("results")
+    if(len(result) == 0):
+        return None
+    sensors = []
+    for sensor in result:
+        sensors.append({
+            sensor.get("parameter").get("name"): sensor.get("id")
+        })
+    return sensors
 
 if __name__ == "__main__":
-    print(fetchsiglegas(273))
-    # print("AQI is", predict_sequence('test'))
+    print(predict_sequence(162))

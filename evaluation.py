@@ -3,8 +3,6 @@ import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.rcParams['font.family'] = 'Times New Roman'
 
-
-# 污染物與對應的 history 檔案
 pollutants = {
     "CO": "models/co_lstm_history.npy",
     "NO2": "models/no2_lstm_history.npy",
@@ -13,7 +11,6 @@ pollutants = {
     "PM10": "models/pm10_lstm_history.npy"
 }
 
-# 想顯示的指標
 metrics = ["loss", "mae", "rmse"]
 
 n_pollutants = len(pollutants)

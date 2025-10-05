@@ -52,14 +52,14 @@ def compute(var):
         Dense(1)
     ])
     model.compile(optimizer='adam',
-                  loss='mse',
-                  metrics=[metrics.MeanAbsoluteError(name='mae'),
-                           metrics.RootMeanSquaredError(name='rmse')])
+                loss='mse',
+                metrics=[metrics.MeanAbsoluteError(name='mae'),
+                        metrics.RootMeanSquaredError(name='rmse')])
 
     # ===== training =====
     hist = model.fit(X_split_train, y_split_train,
-                     validation_data=(X_split_test, y_split_test),
-                     epochs=10, verbose=1)
+                validation_data=(X_split_test, y_split_test),
+                epochs=10, verbose=1)
 
     # ===== evalution =====
     yhat = model.predict(X_split_test)
@@ -96,24 +96,24 @@ def compute(var):
         "history_path": hist_path,
     }
 
-if __name__ == "__main__":
-    # create directory if not exists
-    os.makedirs(SAVE_DIR, exist_ok=True)
+# if __name__ == "__main__":
+#     # create directory if not exists
+#     os.makedirs(SAVE_DIR, exist_ok=True)
 
-    # load data
-    df = pd.read_csv('data/data_221_2022-2025/locationid221_2022-2025.csv')
-    df = df.dropna()
-    print("df.shape: ", df.shape)
+#     # load data
+#     df = pd.read_csv('data/data_221_2022-2025/locationid221_2022-2025.csv')
+#     df = df.dropna()
+#     print("df.shape: ", df.shape)
 
-    # split into train and test sets
-    train_size = int(len(df) * 0.8)
-    x_train = df[:train_size]
-    x_test = df[train_size:]
-    print(f"total data amount: {len(df)}")
-    print(f"training data amount: {len(x_train)}")
-    print(f"testing data amont: {len(x_test)}")
+#     # split into train and test sets
+#     train_size = int(len(df) * 0.8)
+#     x_train = df[:train_size]
+#     x_test = df[train_size:]
+#     print(f"total data amount: {len(df)}")
+#     print(f"training data amount: {len(x_train)}")
+#     print(f"testing data amont: {len(x_test)}")
 
-    vars_to_train = ["pm25", "pm10", "o3", "no2", "so2", "co"]
-    artifacts = {}
-    for v in vars_to_train:
-        artifacts[v] = compute(v)
+#     vars_to_train = ["pm25", "pm10", "o3", "no2", "so2", "co"]
+#     artifacts = {}
+#     for v in vars_to_train:
+#         artifacts[v] = compute(v)
